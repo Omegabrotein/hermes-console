@@ -778,7 +778,11 @@ class NotificationService
 
   Future<void> _doInit() async {
     const android = AndroidInitializationSettings('ic_stat_hermes');
-    const settings = InitializationSettings(android: android);
+    // ponytail: iOS initialization is minimal — the plugin's Darwin side handles
+    // the UNUserNotificationCenter under the hood. No categories are needed
+    // here because the app's action buttons come from the rich card widget.
+    const ios = DarwinInitializationSettings();
+    const settings = InitializationSettings(android: android, iOS: ios);
     try {
       await _plugin.initialize(
         settings,
@@ -888,6 +892,8 @@ class NotificationService
       // Pide el permiso (Android 13+) en el arranque, una sola vez. Nunca desde
       // el isolate del servicio en 2º plano (no hay Activity para el diálogo).
       await _maybeAutoRequestPermission();
+      // iOS: ask for alert/badge/sound once at startup, same policy as Android 13+.
+      await _maybeAutoRequestIosPermission();
     } catch (e) {
       _available = false;
       _log('init FALLÓ: $e');
@@ -912,6 +918,26 @@ class NotificationService
       _log('POST_NOTIFICATIONS solicitado al arranque → granted=$granted');
     } catch (e) {
       _log('POST_NOTIFICATIONS request falló: $e');
+    }
+  }
+
+  Future<void> _maybeAutoRequestIosPermission() async {
+    if (!appInForeground) return;
+    if (_prefs.getBool(_kPermRequested) == true) return;
+    await _prefs.setBool(_kPermRequested, true);
+    final ios = _plugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
+    try {
+      final granted = await ios?.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      _log('iOS notification permission requested → granted=$granted');
+    } catch (e) {
+      _log('iOS notification permission request failed: $e');
     }
   }
 
