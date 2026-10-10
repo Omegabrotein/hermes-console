@@ -60,9 +60,17 @@ jobs:
           echo "$IOS_PROFILE_BASE64" | base64 -d > "$dir/hermesconsole.mobileprovision"
           security cms -D -i "$dir/hermesconsole.mobileprovision" | grep -A1 '<key>Name</key>'
 
+      # ponytail: Apple treats any bundled file starting with "#!" as unsigned
+      # code and rejects the upload. The bridge runs as `python3 file`, so the
+      # shebang is dropped in the iOS build only (Android asset untouched).
+      - name: Strip shebang from bundled scripts
+        run: |
+          for f in $(grep -rlI '^#!' assets); do sed -i '' '1{/^#!/d;}' "$f"; echo "stripped $f"; done
+
       - name: Build and sign iOS app
         run: |
           flutter build ipa --release \
+            --build-number=$((10000 + GITHUB_RUN_NUMBER * 10 + GITHUB_RUN_ATTEMPT)) \
             --export-options-plist=ios/ExportOptions.plist
 
       - name: Upload to TestFlight
