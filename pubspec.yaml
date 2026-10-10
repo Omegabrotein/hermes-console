@@ -109,6 +109,7 @@ flutter:
     - assets/
     - assets/fonts/OFL.txt
     - assets/bridge/hermes_bridge.py
+    - assets/bridge/hermes_bridge.py.gz
     # Branding "Spark" (chispa de marca). El widget de mascota es CustomPaint
     # (sin asset); estos son el logo/símbolo estático para splash/about/header.
     - assets/branding/spark_mark.png
