@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/services.dart' show rootBundle;
 
 import 'bridge_client.dart';
 import 'bridge_release_channel.dart';
 import 'bridge_version.dart';
 import 'connection_manager.dart';
 import 'server_setup_generator.dart';
+import 'bundled_bridge_source.dart';
 
 /// Instala el Mobile Bridge en una instancia REMOTA usando la conexión que ya
 /// existe (el token del gateway), sin SSH ni copia-pega: lanza una ejecución
@@ -239,9 +239,7 @@ fi
       );
     }
     final py =
-        release?.source ??
-        bridgeSource ??
-        await rootBundle.loadString('assets/bridge/hermes_bridge.py');
+        release?.source ?? bridgeSource ?? await loadBundledBridgeSource();
     final bridgeB64 = base64.encode(gzip.encode(utf8.encode(py)));
     return buildInstallScript(bridgeB64, _conn.host.trim());
   }

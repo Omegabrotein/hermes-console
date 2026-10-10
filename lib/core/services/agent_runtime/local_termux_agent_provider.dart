@@ -10,7 +10,6 @@ import 'dart:convert';
 import 'dart:io' show gzip;
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 
@@ -18,6 +17,7 @@ import '../bridge_client.dart';
 import '../connection_manager.dart';
 import '../platform/android_apps.dart';
 import 'agent_runtime.dart';
+import '../bundled_bridge_source.dart';
 
 class LocalTermuxAgentProvider implements AgentRuntimeProvider {
   final AppBridge apps;
@@ -69,7 +69,9 @@ class LocalTermuxAgentProvider implements AgentRuntimeProvider {
   /// Permite la detección binaria honesta cuando no hay marca persistida ni el
   /// agente está corriendo.
   Future<bool?> probeAgentInstalled() async {
-    final out = await apps.probeTermux(AgentRuntimeConsts.detectInstalledCommand);
+    final out = await apps.probeTermux(
+      AgentRuntimeConsts.detectInstalledCommand,
+    );
     if (out == null) return null;
     if (out.contains('@@HERMES_INSTALLED')) return true;
     if (out.contains('@@HERMES_ABSENT')) return false;
@@ -233,8 +235,7 @@ class LocalTermuxAgentProvider implements AgentRuntimeProvider {
   /// reinicie Termux". gzip lo reduce ~69 % (a ~37 KB), dejando >80 KB de margen.
   Future<String?> _bridgeDeployPrefix() async {
     try {
-      final script =
-          await rootBundle.loadString('assets/bridge/hermes_bridge.py');
+      final script = await loadBundledBridgeSource();
       if (script.trim().isEmpty) return null;
       final b64 = base64.encode(gzip.encode(utf8.encode(script)));
       return AgentRuntimeConsts.deployBridgeCommand(b64);
@@ -325,9 +326,9 @@ class LocalTermuxAgentProvider implements AgentRuntimeProvider {
   /// Opcional: por defecto la desinstalación los CONSERVA para no re-descargar
   /// GB al reinstalar. Se llama tras la desinstalación (ollama ya parado).
   Future<bool> removeOllamaModels() => apps.runInTermux(
-        AgentRuntimeConsts.removeOllamaModelsCommand,
-        background: true,
-      );
+    AgentRuntimeConsts.removeOllamaModelsCommand,
+    background: true,
+  );
 
   /// Cancela la desinstalación en curso. Best-effort.
   Future<bool> cancelUninstall() => apps.runInTermux(
@@ -377,12 +378,16 @@ class LocalTermuxAgentProvider implements AgentRuntimeProvider {
       final res = await _http.head(uri).timeout(const Duration(seconds: 6));
       return res.statusCode < 500;
     } catch (e) {
-      debugPrint('[termux-agent] excepción silenciada (se continúa sin propagar): $e');
+      debugPrint(
+        '[termux-agent] excepción silenciada (se continúa sin propagar): $e',
+      );
       try {
         final res = await _http.get(uri).timeout(const Duration(seconds: 8));
         return res.statusCode == 200;
       } catch (e) {
-        debugPrint('[termux-agent] excepción silenciada (GET de respaldo también falló, se asume false): $e');
+        debugPrint(
+          '[termux-agent] excepción silenciada (GET de respaldo también falló, se asume false): $e',
+        );
         return false;
       }
     }
@@ -476,9 +481,11 @@ class LocalTermuxAgentProvider implements AgentRuntimeProvider {
         'http://${AgentRuntimeConsts.localHost}:${AgentRuntimeConsts.localDashboardPort}';
     final existing = cm
         .getConnections()
-        .where((c) =>
-            c.host == AgentRuntimeConsts.localHost &&
-            c.kind == InstanceKind.localhost)
+        .where(
+          (c) =>
+              c.host == AgentRuntimeConsts.localHost &&
+              c.kind == InstanceKind.localhost,
+        )
         .toList();
     // Token canónico con el que la app arranca el agente (UUID persistido).
     // El dashboard local lo exige; una conexión con un apiKey distinto recibe
@@ -584,10 +591,8 @@ class LocalTermuxAgentProvider implements AgentRuntimeProvider {
     if (!AgentRuntimeConsts.isValidModelName(model)) {
       throw ArgumentError('Invalid model name: $model');
     }
-    final req = http.Request(
-      'POST',
-      Uri.parse('$_ollamaBase/api/pull'),
-    )..body = jsonEncode({'model': model, 'stream': true});
+    final req = http.Request('POST', Uri.parse('$_ollamaBase/api/pull'))
+      ..body = jsonEncode({'model': model, 'stream': true});
     req.headers['content-type'] = 'application/json';
 
     final res = await _http.send(req);
@@ -630,9 +635,7 @@ class LocalTermuxAgentProvider implements AgentRuntimeProvider {
     Duration timeout = const Duration(seconds: 3),
   }) async {
     try {
-      final res = await _http
-          .get(Uri.parse('$_ollamaBase/'))
-          .timeout(timeout);
+      final res = await _http.get(Uri.parse('$_ollamaBase/')).timeout(timeout);
       return res.statusCode < 500;
     } catch (e) {
       debugPrint('[termux-agent] excepción silenciada (se asume false): $e');
@@ -698,7 +701,9 @@ class LocalTermuxAgentProvider implements AgentRuntimeProvider {
           .where((n) => n.isNotEmpty)
           .toList();
     } catch (e) {
-      debugPrint('[termux-agent] excepción silenciada (se devuelve lista vacía): $e');
+      debugPrint(
+        '[termux-agent] excepción silenciada (se devuelve lista vacía): $e',
+      );
       return [];
     }
   }
@@ -714,10 +719,8 @@ class LocalTermuxAgentProvider implements AgentRuntimeProvider {
       throw ArgumentError('Invalid model name: $model');
     }
     try {
-      final req = http.Request(
-        'DELETE',
-        Uri.parse('$_ollamaBase/api/delete'),
-      )..body = jsonEncode({'model': model});
+      final req = http.Request('DELETE', Uri.parse('$_ollamaBase/api/delete'))
+        ..body = jsonEncode({'model': model});
       req.headers['content-type'] = 'application/json';
       final res = await _http.send(req).timeout(timeout);
       // Drena el cuerpo para liberar la conexión.

@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 
 import 'bridge_version.dart';
+import 'bundled_bridge_source.dart';
 
 class BridgeReleaseTarget {
   final String version;
@@ -104,8 +104,7 @@ class BridgeReleaseChannel {
     this.requestTimeout = defaultRequestTimeout,
   }) : _http = httpClient ?? http.Client(),
        _loadPackagedSource =
-           loadPackagedSource ??
-           (() => rootBundle.loadString('assets/bridge/hermes_bridge.py')),
+           loadPackagedSource ?? (() => loadBundledBridgeSource()),
        _loadAppBuild = loadAppBuild ?? _platformBuild;
 
   static Future<int> _platformBuild() async {

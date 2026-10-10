@@ -63,17 +63,19 @@ jobs:
       # ponytail: Apple treats any bundled file starting with "#!" as unsigned
       # code and rejects the upload. The bridge runs as `python3 file`, so the
       # shebang is dropped in the iOS build only (Android asset untouched).
-      - name: Strip shebang from bundled scripts
+      - name: Repack bridge asset for iOS only
+        # ponytail: Apple rejects .py files in the bundle. The Dart loader
+        # reads assets/bridge/hermes_bridge.py.gz on iOS and falls back to
+        # assets/bridge/hermes_bridge.py on Android. Android assets/ is
+        # left untouched so store builds keep working.
         run: |
-          for f in $(grep -rlI '^#!' assets); do sed -i '' '1{/^#!/d;}' "$f"; echo "stripped $f"; done
-          chmod -R a-x+X assets
-          # Apple's upload validator flags bundled .py files as unsigned code.
-          # Rename the bridge asset for the iOS build only; Dart loads it as text.
-          git mv assets/bridge/hermes_bridge.py assets/bridge/hermes_bridge.py.txt
-          grep -rl "assets/bridge/hermes_bridge.py" lib pubspec.yaml | xargs sed -i '' "s#assets/bridge/hermes_bridge.py#assets/bridge/hermes_bridge.py.txt#g"
-          grep -rn "assets/bridge/hermes_bridge" lib pubspec.yaml
-          xattr -cr assets
-          ls -l assets/bridge/
+          /usr/bin/python3 - <<'PY'
+          import gzip, pathlib
+          src = pathlib.Path("assets/bridge/hermes_bridge.py")
+          dst = pathlib.Path("assets/bridge/hermes_bridge.py.gz")
+          dst.write_bytes(gzip.compress(src.read_bytes(), 9))
+          print("gz", dst.stat().st_size, "bytes")
+          PY
 
       - name: Build and sign iOS app
         run: |
@@ -84,7 +86,7 @@ jobs:
       - name: Inspect bundled script in signed app
         run: |
           app=$(find build/ios/archive -name Runner.app -type d | head -1)
-          f="$app/Frameworks/App.framework/flutter_assets/assets/bridge/hermes_bridge.py.txt"
+          f="$app/Frameworks/App.framework/flutter_assets/assets/bridge/hermes_bridge.py.gz"
           ls -l@ "$f"; file "$f"; head -c 120 "$f"; echo
           codesign --verify --deep --strict --verbose=2 "$app" 2>&1 | tail -5
           grep -c "hermes_bridge.py" "$app/Frameworks/App.framework/_CodeSignature/CodeResources" || true
