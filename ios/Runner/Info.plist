@@ -27,7 +27,9 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>CFBundleURLTypes</key>
+		<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Hermes Console can read your approximate location when you ask it to attach it to a chat message or to discover Hermes servers on your local network.</string>
+<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleURLSchemes</key>
