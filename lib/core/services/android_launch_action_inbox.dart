@@ -22,8 +22,15 @@ class AndroidLaunchActionInbox {
     if (_initialized) return null;
     _initialized = true;
     _channel.setMethodCallHandler(_handleNativeCall);
-    final raw = await _channel.invokeMethod<Object?>('takePendingLaunchAction');
-    return NewSessionLaunchAction.tryParse(raw);
+    try {
+      final raw = await _channel.invokeMethod<Object?>(
+        'takePendingLaunchAction',
+      );
+      return NewSessionLaunchAction.tryParse(raw);
+    } on MissingPluginException {
+      // iOS port: no native launch-action bridge yet; no pending action.
+      return null;
+    }
   }
 
   Future<void> _handleNativeCall(MethodCall call) async {
