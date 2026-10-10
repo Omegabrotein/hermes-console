@@ -74,8 +74,13 @@ jobs:
           src = pathlib.Path("assets/bridge/hermes_bridge.py")
           dst = pathlib.Path("assets/bridge/hermes_bridge.py.gz")
           dst.write_bytes(gzip.compress(src.read_bytes(), 9))
-          print("gz", dst.stat().st_size, "bytes")
+          src.unlink()
+          print("gz", dst.stat().st_size, "bytes; py removed")
           PY
+          # .py must NOT ship on iOS (Apple sniffs it as unsigned code);
+          # loader prefers .gz and only falls back if .gz is absent.
+          sed -i '' "/assets\/bridge\/hermes_bridge.py$/d" pubspec.yaml
+          grep -n "hermes_bridge" pubspec.yaml
 
       - name: Build and sign iOS app
         run: |
