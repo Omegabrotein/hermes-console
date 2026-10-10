@@ -37,9 +37,10 @@ lib/l10n/app_localizations*.dart
 /build/
 /coverage/
 
-# Proyecto Android-only (ADR-024). Flutter puede regenerar un Runner iOS al
-# resolver plugins; se ignora completo hasta que exista soporte iOS real.
-/ios/
+# iOS port (fork): ios/ is tracked. Ignore CocoaPods/Flutter build state only.
+/ios/Pods/
+/ios/Flutter/ephemeral/
+/ios/.symlinks/
 
 # Symbolication related
 app.*.symbols
