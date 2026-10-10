@@ -1,0 +1,40 @@
+name: iOS build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ios-port]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.1'
+          channel: stable
+          cache: true
+
+      - run: flutter --version && xcodebuild -version
+
+      - run: flutter pub get
+
+      # ponytail: unsigned compile check only. Signing + TestFlight upload step
+      # gets added once ASC secrets are approved and the app record exists.
+      - name: Build iOS (no codesign)
+        run: flutter build ios --release --no-codesign --verbose 2>&1 | tail -400
+
+      - name: Fail if build failed
+        run: test -d build/ios/iphoneos/Runner.app
