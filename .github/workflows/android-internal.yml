@@ -60,8 +60,9 @@ jobs:
             flutter build appbundle --release --flavor play
           else
             # ponytail: keystore missing — build unsigned AAB so this workflow
-            # never silently leaks data. The 'publish' step below no-ops.
-            flutter build appbundle --release --flavor play --no-shrink
+            # never silently breaks CI. The validator in build.gradle.kts is
+            # opt-out via -PrequireReleaseSigning=false.
+            flutter build appbundle --release --flavor play --no-shrink -PrequireReleaseSigning=false
             echo "::warning::android/key.properties missing; AAB is unsigned. Set GitHub secrets ANDROID_KEY_PROPERTIES + ANDROID_UPLOAD_KEYSTORE_BASE64 to enable signed builds."
           fi
 

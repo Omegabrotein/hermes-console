@@ -118,13 +118,21 @@ dependencies {
    implementation("androidx.work:work-runtime-ktx:2.11.2")
 }
 
+// ponytail: only enforce keystore presence when signing is wanted (default).
+// Local Android-signed debug sessions skip the requirement via
+// `flutter build appbundle --release -PrequireReleaseSigning=false`.
+val requireReleaseSigning =
+   (project.findProperty("requireReleaseSigning") as String?)?.toBoolean() ?: true
 val validateReleaseSigning by tasks.registering {
    doLast {
-       if (!hasReleaseKeystore ||
-           !keystoreProperties.containsKey("storeFile") ||
-           !keystoreProperties.containsKey("keyAlias")) {
+       if (requireReleaseSigning &&
+           (!hasReleaseKeystore ||
+               !keystoreProperties.containsKey("storeFile") ||
+               !keystoreProperties.containsKey("keyAlias"))
+       ) {
            throw GradleException(
-               "Release signing is not configured. Add key.properties at the project root."
+               "Release signing is not configured. Add key.properties at the project root " +
+                   "or build with -PrequireReleaseSigning=false."
            )
        }
    }
