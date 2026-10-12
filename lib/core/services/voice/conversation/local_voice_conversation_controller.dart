@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
@@ -58,7 +59,11 @@ class LocalVoiceConversationController extends ChangeNotifier
   // handoff keeps this conservative Android acoustic-tail fence. Pixel QA owns
   // any later reduction; it is an adaptation of the Desktop guarantees, not a
   // claim that PLAYBACK_GRACE_MS is itself a post-playback timer upstream.
-  static const Duration _playbackTailGuard = Duration(milliseconds: 500);
+  // iOS: AVAudioSession voice processing cancels loudspeaker echo, so a short
+  // fence suffices there.
+  static final Duration _playbackTailGuard = Duration(
+    milliseconds: Platform.isIOS ? 150 : 500,
+  );
   final Future<void> Function(Duration delay) _playbackTailDelay;
   final StreamController<SttCheck> _unavailable =
       StreamController<SttCheck>.broadcast();

@@ -408,7 +408,7 @@ void main() {
   // español, no un test desactualizado. No "arreglar" el test: investigar.
   group('Idioma de voz en el dictado (spec 031)', () {
     test('el fin de turno local conserva el ritmo de Hermes Desktop', () {
-      expect(kVoiceTurnSilenceTimeout, const Duration(milliseconds: 1250));
+      expect(kVoiceTurnSilenceTimeout, const Duration(milliseconds: 800));
       expect(kVoiceTurnMaxDuration, const Duration(seconds: 60));
     });
 

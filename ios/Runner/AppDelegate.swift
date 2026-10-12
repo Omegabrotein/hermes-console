@@ -12,5 +12,15 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "HermesDeviceMemory") {
+      FlutterMethodChannel(name: "hermes/device_memory", binaryMessenger: registrar.messenger())
+        .setMethodCallHandler { call, result in
+          if call.method == "physicalMemory" {
+            result(Int64(ProcessInfo.processInfo.physicalMemory))
+          } else {
+            result(FlutterMethodNotImplemented)
+          }
+        }
+    }
   }
 }

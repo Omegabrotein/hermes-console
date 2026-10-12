@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:whisper_ggml_plus/whisper_ggml_plus.dart';
@@ -370,6 +371,7 @@ class VoiceService {
     // estaba activo al arrancar. Cambiar de selector después no puede migrarlo
     // accidentalmente al otro proveedor.
     _legacyStreamingTtsProfile = _settings.streamingTtsProfile;
+    if (Platform.isIOS) unawaited(_loadIosMemoryProfile());
   }
 
   VoiceSettings get settings => _settings;
@@ -1061,9 +1063,25 @@ class VoiceService {
   DeviceMemoryProfile? _memoryProfile;
   DeviceMemoryProfile get _deviceMemory =>
       debugMemoryProfile ??
-      (_memoryProfile ??= Platform.isAndroid
-          ? DeviceMemoryProfile.read()
-          : const DeviceMemoryProfile(memTotalBytes: 0));
+      (Platform.isIOS
+          ? _memoryProfile ?? const DeviceMemoryProfile(memTotalBytes: 0)
+          : (_memoryProfile ??= Platform.isAndroid
+                ? DeviceMemoryProfile.read()
+                : const DeviceMemoryProfile(memTotalBytes: 0)));
+
+  /// iOS no expone `/proc/meminfo`: la RAM física llega por el canal nativo
+  /// `hermes/device_memory`. Hasta que responda (o si falla) rige 0 bytes, es
+  /// decir, la serialización protectora.
+  Future<void> _loadIosMemoryProfile() async {
+    try {
+      final bytes = await const MethodChannel(
+        'hermes/device_memory',
+      ).invokeMethod<int>('physicalMemory');
+      _memoryProfile = DeviceMemoryProfile(memTotalBytes: bytes ?? 0);
+    } catch (_) {
+      _memoryProfile = const DeviceMemoryProfile(memTotalBytes: 0);
+    }
+  }
 
   bool _voiceMemoryPressure = false;
 

@@ -18,7 +18,7 @@ export 'package:whisper_ggml_plus/whisper_ggml_plus.dart' show WhisperModel;
 /// Ritmo conversacional de Hermes Desktop. Los motores móviles que controlan
 /// su propio endpointing comparten estos tiempos para que una pausa natural no
 /// corte antes el turno y un monólogo largo tenga el mismo límite de seguridad.
-const Duration kVoiceTurnSilenceTimeout = Duration(milliseconds: 1250);
+const Duration kVoiceTurnSilenceTimeout = Duration(milliseconds: 800);
 const Duration kVoiceTurnIdleSilenceTimeout = Duration(seconds: 12);
 const Duration kVoiceTurnMaxDuration = Duration(seconds: 60);
 
