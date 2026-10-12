@@ -1,17 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Auto-backup + device transfer rules for hermes-console (Android 12+).
+
+  Goal: keep user-managed server URLs, dashboard/bridge tokens, voice settings,
+  app preferences and cached sessions alive across in-place updates AND across
+  reinstalls on the same phone — so installing a new APK never asks the user
+  to re-add their Hermes server.
+
+  E2EE note: ssh/bridge/server API tokens go through flutter_secure_storage,
+  whose master key lives in Android Keystore. Cloud restore requires a device
+  screen lock; disableIfNoEncryptionCapabilities is set so the restore is
+  refused rather than producing an app that cannot read its own keyring on an
+  unlocked phone.
+-->
 <data-extraction-rules>
     <cloud-backup disableIfNoEncryptionCapabilities="true">
-        <exclude domain="root" path="." />
-        <exclude domain="file" path="." />
-        <exclude domain="database" path="." />
-        <exclude domain="sharedpref" path="." />
-        <exclude domain="external" path="." />
+        <include domain="sharedpref" path="." />
+        <include domain="database" path="." />
+        <include domain="file" path="." />
+        <exclude domain="database" path="HermesDatabase.db-journal" />
+        <exclude domain="database" path="HermesDatabase.db-shm" />
     </cloud-backup>
     <device-transfer>
-        <exclude domain="root" path="." />
-        <exclude domain="file" path="." />
-        <exclude domain="database" path="." />
-        <exclude domain="sharedpref" path="." />
-        <exclude domain="external" path="." />
+        <include domain="sharedpref" path="." />
+        <include domain="database" path="." />
+        <include domain="file" path="." />
+        <exclude domain="database" path="HermesDatabase.db-journal" />
+        <exclude domain="database" path="HermesDatabase.db-shm" />
     </device-transfer>
 </data-extraction-rules>
