@@ -2501,7 +2501,7 @@ class _ChatScreenState extends State<ChatScreen>
       final acknowledged =
           prepared.state == PreparedTurnState.accepted ||
           prepared.state == PreparedTurnState.running;
-      final english = Localizations.localeOf(context).languageCode == 'en';
+      final english = Localizations.localeOf(context).languageCode != 'es';
       HermesNotice.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -14608,7 +14608,7 @@ class _BotChatAppBarTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).hermes;
-    final english = Localizations.localeOf(context).languageCode == 'en';
+    final english = Localizations.localeOf(context).languageCode != 'es';
     final profile = this.profile;
     final name = profile != null && profile.name.isNotEmpty
         ? profile.name

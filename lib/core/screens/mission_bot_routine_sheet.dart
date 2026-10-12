@@ -132,7 +132,7 @@ final class MissionBotRoutineSheetCopy {
   );
 
   static MissionBotRoutineSheetCopy forLocale(Locale locale) =>
-      locale.languageCode == 'en' ? en : es;
+      locale.languageCode == 'es' ? es : en;
 }
 
 class MissionBotRoutineSheet extends StatefulWidget {

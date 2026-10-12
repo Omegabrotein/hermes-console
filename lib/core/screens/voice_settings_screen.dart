@@ -1847,6 +1847,7 @@ class _VoiceSettingsScreenState extends State<VoiceSettingsScreen> {
     String languageName(String value) => switch (value.toLowerCase()) {
       'es' => s.languageSpanish,
       'en' => s.languageEnglish,
+      'vi' => s.languageVietnamese,
       final value => value.toUpperCase(),
     };
     return s.voiceServerLanguageMismatch(

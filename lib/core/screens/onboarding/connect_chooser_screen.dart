@@ -110,7 +110,7 @@ class _ConnectChooserScreenState extends State<ConnectChooserScreen> {
 
   Future<void> _openInstallGuide() async {
     final language = Localizations.localeOf(context).languageCode;
-    final path = language == 'en' ? '/en/guia#instalar' : '/guia#instalar';
+    final path = language == 'es' ? '/guia#instalar' : '/en/guia#instalar';
     var opened = false;
     try {
       opened = await launchUrl(

@@ -502,6 +502,21 @@ void main() {
       expect(VoiceSettings.defaultStreamingVoiceFor('es'), 'em_santa');
       expect(VoiceSettings.defaultStreamingVoiceFor('xx'), 'em_santa');
     });
+
+    test(
+      'sin elección guardada, app en vietnamita → vais1000 y af_heart',
+      () async {
+        SharedPreferences.setMockInitialValues({'app_locale': 'vi'});
+        final prefs = await SharedPreferences.getInstance();
+        final s = VoiceSettings.load(prefs);
+        expect(s.onnxVoiceId, 'vi_VN-vais1000-medium');
+        final voice = neuralVoiceById(s.onnxVoiceId);
+        expect(voice, isNotNull);
+        expect(voice!.locale, 'vi-VN');
+        // Kokoro no tiene voz vi: cae a la inglesa.
+        expect(s.streamingTtsVoice, 'af_heart');
+      },
+    );
   });
 
   // Spec 031 (contrato I1): igual que arriba, pero para la voz del sistema.
@@ -526,6 +541,12 @@ void main() {
         'en-IN',
       ]);
       expect(kDeviceTtsFallback['en'], 'en-US');
+    });
+
+    test('vietnamita: STT del sistema y voz del sistema en vi-VN', () {
+      expect(kSystemSttLocalePrefs['vi'], const ['vi_VN', 'vi-VN', 'vi']);
+      expect(kDeviceTtsLangPrefs['vi'], const ['vi-VN']);
+      expect(kDeviceTtsFallback['vi'], 'vi-VN');
     });
   });
 }

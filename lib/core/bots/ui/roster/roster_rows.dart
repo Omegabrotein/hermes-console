@@ -14,7 +14,7 @@ import 'roster_model.dart';
 /// week, otherwise d MMM.
 String rosterTime(BuildContext context, DateTime at, {DateTime? now}) {
   final locale = Localizations.localeOf(context).toLanguageTag();
-  final english = Localizations.localeOf(context).languageCode == 'en';
+  final english = Localizations.localeOf(context).languageCode != 'es';
   final current = now ?? DateTime.now();
   final diff = current.difference(at);
   if (diff.inSeconds.abs() < 60) return english ? 'now' : 'ahora';

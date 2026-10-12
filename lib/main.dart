@@ -397,6 +397,7 @@ class AppLocales {
     AppLocaleOption('system', 'Sistema', null),
     AppLocaleOption('es', 'Español', Locale('es')),
     AppLocaleOption('en', 'English', Locale('en')),
+    AppLocaleOption('vi', 'Tiếng Việt', Locale('vi')),
   ];
 
   static AppLocaleOption byId(String? id) =>
@@ -2423,8 +2424,10 @@ class HermesAppState extends State<HermesApp> with WidgetsBindingObserver {
               // otro caso caemos a inglés, nunca a un español a medias. Cubre los
               // tres casos: elección manual 'es'/'en' y modo "Sistema" (locale
               // nulo → llega el idioma del dispositivo).
+              // Vietnamita ('vi') también es completo.
               localeResolutionCallback: (locale, supported) {
                 if (locale?.languageCode == 'es') return const Locale('es');
+                if (locale?.languageCode == 'vi') return const Locale('vi');
                 return const Locale('en');
               },
               theme: AppFonts.applyToTheme(activeTheme, AppFonts.byId(font)),

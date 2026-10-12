@@ -3572,7 +3572,7 @@ final class _RoomsAreaCopy {
   const _RoomsAreaCopy._(this._english);
 
   factory _RoomsAreaCopy.of(BuildContext context) => _RoomsAreaCopy._(
-    Localizations.localeOf(context).languageCode.toLowerCase() == 'en',
+    Localizations.localeOf(context).languageCode.toLowerCase() != 'es',
   );
 
   String get removeMember => _english ? 'Remove' : 'Quitar';

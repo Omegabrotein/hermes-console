@@ -92,6 +92,7 @@ abstract interface class CapturedWavSttEngine {
 const Map<String, List<String>> kSystemSttLocalePrefs = {
   'es': ['es_ES', 'es_US', 'es_MX', 'es_419', 'es_CO', 'es_AR', 'es-ES', 'es'],
   'en': ['en_US', 'en_GB', 'en_AU', 'en_IN', 'en-US', 'en'],
+  'vi': ['vi_VN', 'vi-VN', 'vi'],
 };
 
 /// Frontera inyectable con los plugins usados por [SystemSttEngine]. Mantiene

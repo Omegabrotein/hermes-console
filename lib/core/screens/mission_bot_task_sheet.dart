@@ -54,7 +54,7 @@ class _MissionBotTaskSheetState extends State<MissionBotTaskSheet> {
   String? _submissionError;
 
   bool get _english =>
-      Localizations.localeOf(context).languageCode.toLowerCase() == 'en';
+      Localizations.localeOf(context).languageCode.toLowerCase() != 'es';
 
   @override
   void dispose() {

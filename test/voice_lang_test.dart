@@ -62,5 +62,28 @@ void main() {
     test('la clave duplicada no diverge de AppLocales.prefKey', () {
       expect(kAppLocalePrefKey, AppLocales.prefKey);
     });
+
+    test('vi explícito y system+dispositivo vi → vi', () async {
+      final prefsVi = await _prefs({kAppLocalePrefKey: 'vi'});
+      expect(effectiveVoiceLang(prefsVi, deviceLocale: en), 'vi');
+      expect(effectiveVoiceLang(prefsVi, deviceLocale: es), 'vi');
+
+      final sys = await _prefs({kAppLocalePrefKey: 'system'});
+      expect(
+        effectiveVoiceLang(sys, deviceLocale: const Locale('vi', 'VN')),
+        'vi',
+      );
+      final ausente = await _prefs({});
+      expect(
+        effectiveVoiceLang(ausente, deviceLocale: const Locale('vi')),
+        'vi',
+      );
+    });
+
+    test('cada idioma de AppLocales es un idioma de voz', () {
+      final ids = AppLocales.all.map((o) => o.id).where((i) => i != 'system');
+      expect(ids.toSet(), kVoiceLangs);
+      expect(AppLocales.byId('vi').label, 'Tiếng Việt');
+    });
   });
 }
