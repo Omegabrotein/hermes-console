@@ -379,4 +379,28 @@ void main() {
     ], reason: 'speak consume el caché: cero síntesis duplicada');
     expect(playback.playCount, 1);
   });
+
+  test(
+    'el primer bloque se corta en ≤80 chars para adelantar el audio',
+    () async {
+      final synthesized = <String>[];
+      final engine = OnDeviceNeuralTtsEngine(
+        modelPath: 'unused.onnx',
+        tokensPath: 'unused.tokens',
+        dataDirPath: 'unused-data',
+        playback: _Playback(),
+        playbackFactory: () => _Playback(),
+        debugWorkerFactory: (config) async => _CountingWorker(synthesized.add),
+        debugWaveWriter: (audio, sequence) async =>
+            '/tmp/hermes-first-$sequence.wav',
+      );
+      addTearDown(engine.dispose);
+
+      const first = 'Claro, te lo explico ahora mismo.';
+      const second =
+          'La segunda frase es bastante más larga y pasa de los ochenta caracteres juntas.';
+      await engine.prewarm('$first $second');
+      expect(synthesized, [first]);
+    },
+  );
 }

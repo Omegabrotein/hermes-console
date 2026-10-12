@@ -51,7 +51,9 @@ class LocalVoiceConversationController extends ChangeNotifier
   }
 
   final VoiceService voice;
-  static const Duration _nativeSpeechFeedCadence = Duration(milliseconds: 150);
+  // 60 ms still batches token deltas but cuts up to ~90 ms off first-audio on
+  // the Hermes server speak-stream route (was 150 ms).
+  static const Duration _nativeSpeechFeedCadence = Duration(milliseconds: 60);
   // Desktop drains WebAudio plus 100 ms, requests AEC/NS and separately ignores
   // the first 500 ms after playback onset in its full-duplex VAD. Android cannot
   // treat an AudioTrack/MediaPlayer completion ACK as proof that loudspeaker

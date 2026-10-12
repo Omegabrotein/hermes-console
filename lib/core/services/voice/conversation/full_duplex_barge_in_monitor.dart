@@ -358,7 +358,10 @@ final class FullDuplexBargeInMonitor {
   static const int _majorityWindow = 10; // 300 ms
   static const int _majorityRequired = 8;
   static const int _preRollFrames = 167; // ~5 s, Hermes Desktop parity
-  static const int _endpointFrames = 42; // 1.26 s, Hermes Desktop parity
+  // ponytail: 27 frames (810 ms) instead of Desktop's 42 (1.26 s) so barge-in
+  // reaches STT as fast as a normal turn (kVoiceTurnSilenceTimeout = 800 ms).
+  // Raise toward 42 if device QA shows interjections cut mid-sentence.
+  static const int _endpointFrames = 27;
   static const int _maxCaptureFrames = 1000; // 30 s after onset
   static const int _graceFrames = 17; // ~500 ms
   static const int _playbackGapFrames = 34; // > 1 s
@@ -637,7 +640,7 @@ final class FullDuplexBargeInMonitor {
         'private=${safety.privateOutput} '
         'policy=desktop_parity_v2 calibration_ms=420 '
         'sustained_ms=300 majority=0.8 pre_roll_ms=5010 '
-        'endpoint_ms=1260 trigger_rms=806 playback_rms=1505',
+        'endpoint_ms=${_endpointFrames * 30} trigger_rms=806 playback_rms=1505',
       );
       return true;
     } catch (error) {

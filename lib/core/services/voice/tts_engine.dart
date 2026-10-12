@@ -28,6 +28,10 @@ abstract class TtsEngine {
   Future<void> dispose();
 }
 
+/// Cap for the first merged sentence block in `_sentences`: it is synthesized
+/// while the user waits in silence, so shorter = earlier first audio.
+const int _firstBlockChars = 80;
+
 /// Capacidad opcional (spec 048/US2-US3): motores cuyo arranque o primera
 /// síntesis es caro pueden precalentarse durante esperas muertas (la espera
 /// de red del agente, la reproducción de la frase anterior). `prewarm()` sin
@@ -1011,7 +1015,10 @@ class OnDeviceNeuralTtsEngine implements TtsEngine, PrewarmableTts {
     final out = <String>[];
     final buf = StringBuffer();
     for (final p in parts) {
-      if (buf.isNotEmpty && buf.length + p.length > 240) {
+      // First block closes early: it is synthesized while the user waits in
+      // silence; later blocks are prefetched while the previous one plays.
+      final cap = out.isEmpty ? _firstBlockChars : 240;
+      if (buf.isNotEmpty && buf.length + p.length > cap) {
         out.add(buf.toString());
         buf.clear();
       }
@@ -1492,7 +1499,10 @@ class OpenAiStreamingTtsEngine implements TtsEngine {
     final out = <String>[];
     final buf = StringBuffer();
     for (final p in parts) {
-      if (buf.isNotEmpty && buf.length + p.length > 240) {
+      // First block closes early: it is synthesized while the user waits in
+      // silence; later blocks are prefetched while the previous one plays.
+      final cap = out.isEmpty ? _firstBlockChars : 240;
+      if (buf.isNotEmpty && buf.length + p.length > cap) {
         out.add(buf.toString());
         buf.clear();
       }

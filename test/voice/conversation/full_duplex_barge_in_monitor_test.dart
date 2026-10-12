@@ -517,9 +517,9 @@ void main() {
       expect(transcripts, isEmpty);
 
       await _emit(source, 1300, 4);
-      // Igual que Desktop: el endpoint usa su umbral de voz propio y termina
-      // tras 42 bloques (~1,26 s), sin reutilizar el suelo de calibración.
-      await _emit(source, 600, 41);
+      // El endpoint usa su umbral de voz propio y termina tras 27 bloques
+      // (~0,81 s), sin reutilizar el suelo de calibración.
+      await _emit(source, 600, 26);
       expect(source.transcriptions, 0);
       await _emit(source, 600, 1);
       expect(source.transcriptions, 1);
@@ -562,14 +562,14 @@ void main() {
       await _emit(source, 1800, 10);
       expect(starts, 1);
 
-      // Desktop termina al acumular ~1,25 s por debajo de 0.075 (~806 RMS).
-      await _emit(source, 600, 42);
+      // Endpoint tras ~0,81 s (27 bloques) por debajo de 0.075 (~806 RMS).
+      await _emit(source, 600, 27);
       expect(source.transcriptions, 1);
 
       final pcmFrames = (source.lastWav!.length - 44) ~/ (480 * 2);
       expect(
         pcmFrames,
-        greaterThanOrEqualTo(209),
+        greaterThanOrEqualTo(194),
         reason: '166-167 bloques de pre-roll más el endpoint deben sobrevivir',
       );
     },
@@ -637,7 +637,7 @@ void main() {
             turn.observeSpeechAboveThreshold();
           },
           onSpeechEndpoint: () {
-            nowMicros += 1260000;
+            nowMicros += 810000;
             turn.mark(VoiceLatencyPoint.speechEndpoint);
           },
           onTranscriptionStart: () {
