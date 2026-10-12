@@ -781,6 +781,122 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'MiniMax ofrece selector de voz y lo guarda por PUT /api/config',
+    (tester) async {
+      final requests = <http.Request>[];
+      final dashboard = _schemaDashboard(
+        requests: requests,
+        config: {
+          'stt': {'provider': 'local'},
+          'tts': {
+            'provider': 'minimax',
+            'minimax': {
+              'model': 'speech-02-hd',
+              'voice_id': 'English_expressive_narrator',
+            },
+          },
+        },
+        fields: {
+          'tts.provider': {
+            'type': 'select',
+            'options': ['minimax', 'elevenlabs'],
+          },
+          'tts.minimax.model': {'type': 'string'},
+          'tts.minimax.voice_id': {'type': 'string'},
+        },
+      );
+      addTearDown(dashboard.close);
+
+      await tester.pumpWidget(_host(dashboard));
+      await tester.pumpAndSettle();
+      await _tapAfterRevealing(
+        tester,
+        find.byKey(const ValueKey('server-tts-active-parameters')),
+      );
+      await tester.pumpAndSettle();
+
+      final voice = find.byKey(
+        const ValueKey('server-voice-field-tts.minimax.voice_id'),
+      );
+      expect(voice, findsOneWidget);
+      expect(tester.widget(voice), isA<DropdownButtonFormField<String>>());
+
+      await tester.tap(voice);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('English_radiant_girl').last);
+      await tester.pumpAndSettle();
+      await _tapAfterRevealing(
+        tester,
+        find.byKey(const ValueKey('server-voice-parameters-save')),
+      );
+      await tester.pumpAndSettle();
+
+      final put = requests.where(
+        (r) => r.method == 'PUT' && r.url.path == '/api/config',
+      );
+      expect(put, hasLength(1));
+      expect(jsonDecode(put.single.body), {
+        'config': {
+          'tts': {
+            'minimax': {'voice_id': 'English_radiant_girl'},
+          },
+        },
+      });
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('sin MiniMax activo no aparece el selector de voz MiniMax', (
+    tester,
+  ) async {
+    final dashboard = _schemaDashboard(
+      requests: <http.Request>[],
+      config: {
+        'stt': {'provider': 'local'},
+        'tts': {
+          'provider': 'elevenlabs',
+          'elevenlabs': {'model_id': 'eleven_multilingual_v2'},
+        },
+      },
+      fields: {
+        'tts.provider': {
+          'type': 'select',
+          'options': ['minimax', 'elevenlabs'],
+        },
+        'tts.elevenlabs.model_id': {'type': 'string'},
+        'tts.minimax.voice_id': {'type': 'string'},
+      },
+    );
+    addTearDown(dashboard.close);
+
+    await tester.pumpWidget(_host(dashboard));
+    await tester.pumpAndSettle();
+    await _tapAfterRevealing(
+      tester,
+      find.byKey(const ValueKey('server-tts-active-parameters')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('server-voice-field-tts.elevenlabs.model_id')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('server-voice-field-tts.minimax.voice_id')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  test(
+    'catálogo MiniMax sin duplicados y con la voz por defecto de Hermes',
+    () {
+      expect(kMiniMaxVoices.toSet(), hasLength(kMiniMaxVoices.length));
+      expect(kMiniMaxVoices, contains('English_expressive_narrator'));
+    },
+  );
 }
 
 Future<void> _openEdgeParameters(WidgetTester tester) async {
