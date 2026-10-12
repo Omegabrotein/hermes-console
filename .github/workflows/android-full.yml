@@ -1,0 +1,53 @@
+name: Android full APK
+
+# ponytail: family-distribution path = side-load. We do not publish to the
+# Play Store. Builds the `full` flavor as a profile-mode arm64 split APK,
+# debug-signed (the same debug key every CI run uses), so updates slide over
+# any existing install on the family devices without a "conflicts with the
+# older version" error. Family members install the APK directly from the
+# GitHub release (link in docs/FAMILY_ANDROID_DISTRIBUTION.md).
+#
+# Why profile mode and not release? Release would need a real upload key in
+# android/key.properties, which requires the ANDROID_KEY_PROPERTIES +
+# ANDROID_UPLOAD_KEYSTORE_BASE64 GitHub secrets. Profile mode auto-uses the
+# debug key, no secrets needed, same signature every run.
+#
+# Why not the existing android-qa.yml? The qa flavor has applicationIdSuffix
+# ".qa" so it installs as a separate app (parallel install for QA). The full
+# flavor shares applicationId with the production app so updates replace it.
+on:
+  workflow_dispatch:
+  push:
+    branches: [ios-port]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-full-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.1'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build apk --profile --flavor full --split-per-abi --target-platform android-arm64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hermes-console-full-arm64
+          path: build/app/outputs/flutter-apk/*.apk
+          retention-days: 30
