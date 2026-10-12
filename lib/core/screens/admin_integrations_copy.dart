@@ -11,7 +11,7 @@ final class AdminIntegrationsCopy {
 
   factory AdminIntegrationsCopy.of(BuildContext context) =>
       AdminIntegrationsCopy._(
-        Localizations.localeOf(context).languageCode.toLowerCase() == 'en',
+        Localizations.localeOf(context).languageCode.toLowerCase() != 'es',
       );
 
   String get screenTitle =>

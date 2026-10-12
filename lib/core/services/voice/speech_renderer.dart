@@ -42,7 +42,12 @@ class SpeechRenderer {
 
   const SpeechRenderer({required this.language});
 
-  bool get _isEnglish => language.toLowerCase().startsWith('en');
+  // ponytail: sin normalización vietnamita; 'vi' usa la inglesa (menos rara
+  // que la española con voz vi). Añadir rama 'vi' si el feedback lo pide.
+  bool get _isEnglish {
+    final l = language.toLowerCase();
+    return l.startsWith('en') || l.startsWith('vi');
+  }
 
   String get _linkWord => _isEnglish ? 'link' : 'enlace';
   String get _codeNotice =>

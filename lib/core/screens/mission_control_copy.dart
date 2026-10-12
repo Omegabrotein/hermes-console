@@ -9,7 +9,7 @@ final class MissionControlCopy {
   const MissionControlCopy._(this._english, this._strings);
 
   factory MissionControlCopy.of(BuildContext context) => MissionControlCopy._(
-    Localizations.localeOf(context).languageCode.toLowerCase() == 'en',
+    Localizations.localeOf(context).languageCode.toLowerCase() != 'es',
     Strings.of(context),
   );
 

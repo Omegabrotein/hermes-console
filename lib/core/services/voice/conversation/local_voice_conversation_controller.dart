@@ -2902,7 +2902,12 @@ class LocalVoiceConversationController extends ChangeNotifier
     if (rebound != null) _turnBinding = rebound;
   }
 
-  bool get _isEnglish => voice.voiceLang.toLowerCase().startsWith('en');
+  // ponytail: notas de voz solo en es/en; 'vi' recibe las inglesas. Mover a
+  // ARB si se quieren notas vietnamitas.
+  bool get _isEnglish {
+    final l = voice.voiceLang.toLowerCase();
+    return l.startsWith('en') || l.startsWith('vi');
+  }
 
   String _sttUnavailableNote(SttCheck check) => _isEnglish
       ? 'Voice recognition is not ready (${check.status.name}).'

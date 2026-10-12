@@ -133,6 +133,19 @@ const List<NeuralVoice> kNeuralVoices = [
     dirName: 'vits-piper-en_GB-alan-medium',
     onnxFile: 'en_GB-alan-medium.onnx',
   ),
+  NeuralVoice(
+    id: 'vi_VN-vais1000-medium',
+    displayName: 'VAIS1000 (Việt Nam)',
+    locale: 'vi-VN',
+    quality: 'media',
+    sizeMb: 64,
+    url: '$_ttsRelease/vits-piper-vi_VN-vais1000-medium.tar.bz2',
+    archiveBytes: 67154040,
+    archiveSha256:
+        'fa1367710767d36ed5cf13b4a449e20c35ffd12791c2e47c2e64142bfa55551a',
+    dirName: 'vits-piper-vi_VN-vais1000-medium',
+    onnxFile: 'vi_VN-vais1000-medium.onnx',
+  ),
 ];
 
 NeuralVoice? neuralVoiceById(String id) {

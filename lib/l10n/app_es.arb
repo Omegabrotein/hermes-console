@@ -16,6 +16,10 @@
   "@languageEnglish": {
     "description": "Nombre del idioma inglés"
   },
+  "languageVietnamese": "Vietnamita",
+  "@languageVietnamese": {
+    "description": "Nombre del idioma vietnamita"
+  },
   "settingsTitle": "Ajustes",
   "@settingsTitle": {
     "description": "Título de la pantalla de ajustes"
