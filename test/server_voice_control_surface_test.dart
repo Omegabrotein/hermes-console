@@ -967,7 +967,10 @@ void main() {
         const ValueKey('server-voice-field-tts.minimax.voice_id'),
       );
       expect(voice, findsOneWidget);
-      expect(tester.widget(voice), isA<DropdownButtonFormField<String>>());
+      expect(
+        tester.widget<HermesSelectField<String>>(voice).value,
+        'English_expressive_narrator',
+      );
 
       await tester.tap(voice);
       await tester.pumpAndSettle();

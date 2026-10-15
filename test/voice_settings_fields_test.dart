@@ -556,9 +556,25 @@ void main() {
       await tapKey(tester, 'voice_phone_voice');
       final names = optionLabels(tester, 'voice_phone_voice_options');
       expect(names, contains('Voz de Android'));
+      // The list is lazy: scroll each voice in, as a user would.
+      final list = find.descendant(
+        of: find.byKey(const ValueKey('hermes-option-list')),
+        matching: find.byType(Scrollable),
+      );
       for (final neural in kNeuralVoices) {
+        await tester.scrollUntilVisible(
+          find.text(neural.displayName),
+          50,
+          scrollable: list,
+        );
+        names.addAll(optionLabels(tester, 'voice_phone_voice_options'));
         expect(names, contains(neural.displayName));
       }
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('voice_phone_voice_android')),
+        -50,
+        scrollable: list,
+      );
       for (final noise in const ['GrapheneOS', 'Google', 'motor', 'Piper']) {
         expect(
           names.where(
