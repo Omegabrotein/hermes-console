@@ -60,41 +60,11 @@ jobs:
           echo "$IOS_PROFILE_BASE64" | base64 -d > "$dir/hermesconsole.mobileprovision"
           security cms -D -i "$dir/hermesconsole.mobileprovision" | grep -A1 '<key>Name</key>'
 
-      # ponytail: Apple treats any bundled file starting with "#!" as unsigned
-      # code and rejects the upload. The bridge runs as `python3 file`, so the
-      # shebang is dropped in the iOS build only (Android asset untouched).
-      - name: Repack bridge asset for iOS only
-        # ponytail: Apple rejects .py files in the bundle. The Dart loader
-        # reads assets/bridge/hermes_bridge.py.gz on iOS and falls back to
-        # assets/bridge/hermes_bridge.py on Android. Android assets/ is
-        # left untouched so store builds keep working.
-        run: |
-          /usr/bin/python3 - <<'PY'
-          import gzip, pathlib
-          src = pathlib.Path("assets/bridge/hermes_bridge.py")
-          dst = pathlib.Path("assets/bridge/hermes_bridge.py.gz")
-          dst.write_bytes(gzip.compress(src.read_bytes(), 9))
-          src.unlink()
-          print("gz", dst.stat().st_size, "bytes; py removed")
-          PY
-          # .py must NOT ship on iOS (Apple sniffs it as unsigned code);
-          # loader prefers .gz and only falls back if .gz is absent.
-          sed -i '' "/assets\/bridge\/hermes_bridge.py$/d" pubspec.yaml
-          grep -n "hermes_bridge" pubspec.yaml
-
       - name: Build and sign iOS app
         run: |
           flutter build ipa --release \
             --build-number=$((10000 + GITHUB_RUN_NUMBER * 10 + GITHUB_RUN_ATTEMPT)) \
             --export-options-plist=ios/ExportOptions.plist
-
-      - name: Inspect bundled script in signed app
-        run: |
-          app=$(find build/ios/archive -name Runner.app -type d | head -1)
-          f="$app/Frameworks/App.framework/flutter_assets/assets/bridge/hermes_bridge.py.gz"
-          ls -l@ "$f"; file "$f"; head -c 120 "$f"; echo
-          codesign --verify --deep --strict --verbose=2 "$app" 2>&1 | tail -5
-          grep -c "hermes_bridge.py" "$app/Frameworks/App.framework/_CodeSignature/CodeResources" || true
 
       - name: Upload to TestFlight
         env:
