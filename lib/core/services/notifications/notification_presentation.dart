@@ -18,13 +18,14 @@ enum NotifPresentation {
   /// Android con `importance: high` (aprobaciones, respuestas).
   alert,
 
-  /// Aviso audible pero sin heads-up: suena y aparece en la lista, sin
-  /// banner. Equivale a `importance: defaultImportance` (ejecuciones).
+  /// Aviso audible pero sin heads-up en primer plano: suena y aparece en la
+  /// lista. Es lo que expresa `importance: defaultImportance` (ejecuciones).
   sound,
 
-  /// Aviso silencioso: sin sonido y sin banner. Aparece en el centro de
-  /// notificaciones pero no interrumpe. Equivale a `importance: low` con
-  /// `playSound: false` (transferencias, operaciones, la sesión de voz).
+  /// Aviso silencioso: no suena ni interrumpe, ni en primer plano ni en
+  /// segundo plano. Aparece solo en el centro de notificaciones. Es lo que
+  /// expresan `importance: low` con `playSound: false` (transferencias,
+  /// operaciones, la sesión de voz).
   silent,
 }
 
@@ -45,6 +46,18 @@ NotifPresentation presentationForImportance(Importance importance) {
 }
 
 /// Opciones de presentación de iOS para una notificación.
+///
+/// Alcance de cada flag (es importante no prometer más de lo que se cumple):
+///
+/// - `presentSound` / `presentBanner` / `presentList` / `presentAlert` deciden
+///   la presentación EN PRIMER PLANO (la app abierta). En segundo plano, iOS
+///   decide con `interruptionLevel` y con el sonido que lleva el contenido.
+/// - `interruptionLevel` es lo que gobierna el segundo plano:
+///   `active` enciende la pantalla y suena; `passive` deja la notificación
+///   en el centro sin encender pantalla ni sonar.
+///
+/// Por eso una notificación "silenciosa" necesita `passive`: con
+/// `presentSound: false` a secas seguiría haciendo banner en segundo plano.
 DarwinNotificationDetails darwinDetailsFor(NotifPresentation presentation) {
   switch (presentation) {
     case NotifPresentation.alert:
@@ -54,6 +67,7 @@ DarwinNotificationDetails darwinDetailsFor(NotifPresentation presentation) {
         presentSound: true,
         presentBanner: true,
         presentList: true,
+        interruptionLevel: InterruptionLevel.active,
       );
     case NotifPresentation.sound:
       return const DarwinNotificationDetails(
@@ -62,14 +76,22 @@ DarwinNotificationDetails darwinDetailsFor(NotifPresentation presentation) {
         presentSound: true,
         presentBanner: false,
         presentList: true,
+        interruptionLevel: InterruptionLevel.active,
       );
     case NotifPresentation.silent:
+      // `passive` es lo que impide que la notificación interrumpa aunque la
+      // app esté en segundo plano: iOS la deja en el centro de notificaciones
+      // sin encender pantalla ni sonar. Los otros flags (presentSound,
+      // presentBanner) solo deciden la presentación EN PRIMER PLANO, así que
+      // sin `passive` una notificación "silenciosa" seguiría haciendo banner
+      // en segundo plano.
       return const DarwinNotificationDetails(
         presentAlert: false,
         presentBadge: false,
         presentSound: false,
         presentBanner: false,
         presentList: true,
+        interruptionLevel: InterruptionLevel.passive,
       );
   }
 }

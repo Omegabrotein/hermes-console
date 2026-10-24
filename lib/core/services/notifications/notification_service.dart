@@ -1290,8 +1290,23 @@ class NotificationService
     return await android?.requestNotificationsPermission() ?? false;
   }
 
+  /// ¿Tiene el usuario permiso para mostrar notificaciones?
+  ///
+  /// Cada plataforma lo responde de forma distinta, así que hay que preguntar
+  /// a la que toca: en iOS la implementación de Android no existe y devolvía
+  /// null, lo que hacía que TODA notificación quedara suprimida.
   Future<bool> permissionGranted() async {
     await _ensurePlatformInitialized();
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final ios = _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
+      final options = await ios?.checkPermissions();
+      if (options == null) return false;
+      // El permiso provisional también deja mostrar notificaciones.
+      return options.isEnabled || options.isProvisionalEnabled;
+    }
     final android = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
