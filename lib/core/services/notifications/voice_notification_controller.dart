@@ -3,6 +3,7 @@ import 'dart:ui' show Color;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'notification_presentation.dart';
 import 'notification_service.dart';
 import 'notification_strings.dart';
 
@@ -157,7 +158,17 @@ class _PluginVoiceNotifier implements VoicePlatformNotifier {
       showWhen: false,
       category: AndroidNotificationCategory.status,
     );
-    await _plugin.show(id, title, body, NotificationDetails(android: details));
+    await _plugin.show(
+      id,
+      title,
+      body,
+      notificationDetailsFor(
+        android: details,
+        // Canal silencioso en Android (importance low, playSound false): en
+        // iOS no debe sonar ni hacer banner.
+        presentation: NotifPresentation.silent,
+      ),
+    );
     return true;
   }
 

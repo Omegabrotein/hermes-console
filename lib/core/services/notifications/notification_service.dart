@@ -25,6 +25,7 @@ import 'notification_delivery_coordinator.dart';
 import 'notification_delivery_store.dart';
 import 'notification_mute_store.dart';
 import 'live_turn_notifications.dart';
+import 'notification_presentation.dart';
 import 'notification_strings.dart';
 
 /// Tipos de evento que pueden notificar (cada uno con su toggle).
@@ -2671,7 +2672,15 @@ class NotificationService
       indeterminate: indeterminate,
       category: AndroidNotificationCategory.progress,
     );
-    await _plugin.show(id, title, body, NotificationDetails(android: details));
+    await _plugin.show(
+      id,
+      title,
+      body,
+      notificationDetailsFor(
+        android: details,
+        presentation: NotifPresentation.silent,
+      ),
+    );
   }
 
   /// Notificación final de una transferencia (completada o con error). Reemplaza
@@ -2700,7 +2709,19 @@ class NotificationService
       autoCancel: true,
       category: AndroidNotificationCategory.status,
     );
-    await _plugin.show(id, title, body, NotificationDetails(android: details));
+    await _plugin.show(
+      id,
+      title,
+      body,
+      notificationDetailsFor(
+        android: details,
+        // Suena solo al terminar OK en 2º plano, igual que en Android: el
+        // canal es _chRuns (importance normal), así que suena sin heads-up.
+        presentation: alert
+            ? NotifPresentation.sound
+            : NotifPresentation.silent,
+      ),
+    );
   }
 
   Future<void> cancelTransfer(int id) => cancelById(id, 'transfer');
@@ -2730,7 +2751,15 @@ class NotificationService
       indeterminate: true,
       category: AndroidNotificationCategory.progress,
     );
-    await _plugin.show(id, title, body, NotificationDetails(android: details));
+    await _plugin.show(
+      id,
+      title,
+      body,
+      notificationDetailsFor(
+        android: details,
+        presentation: NotifPresentation.silent,
+      ),
+    );
   }
 
   Future<void> cancelOperation(int id) => cancelById(id, 'operation');
@@ -3293,7 +3322,12 @@ class NotificationService
       id,
       displayTitle,
       displayBody,
-      NotificationDetails(android: details),
+      notificationDetailsFor(
+        android: details,
+        // Android acota la importancia de la notificación a la del canal, así
+        // que la del canal es la que refleja cómo suena.
+        presentation: presentationForImportance(ch.importance),
+      ),
       payload: payload,
     );
     _log('${kind.name} MOSTRADA (id=$id, fg=$appInForeground)');
@@ -3335,7 +3369,12 @@ class NotificationService
       _groupSummaryId,
       t.brand,
       t.groupSummaryCount(children),
-      NotificationDetails(android: details),
+      notificationDetailsFor(
+        android: details,
+        // El resumen del grupo nunca alerta en Android (GroupAlertBehavior
+        // .children: alertan las hijas), así que en iOS tampoco suena.
+        presentation: NotifPresentation.silent,
+      ),
     );
   }
 
