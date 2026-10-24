@@ -3125,6 +3125,7 @@
   "qrTorch": "Linterna",
   "qrAimHint": "Apunta al código de la pantalla",
   "qrCameraError": "Sin cámara no puedo escanear",
+  "qrSettingsFailed": "No se pudieron abrir los ajustes del sistema",
   "qrPasteLink": "Pegar un enlace",
   "setUpdatingHermesAuto": "Actualizando Hermes automáticamente…",
   "commonResult": "Resultado",

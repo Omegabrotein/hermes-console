@@ -2595,6 +2595,7 @@
   "qrTorch": "Torch",
   "qrAimHint": "Point at the code on the screen",
   "qrCameraError": "Without the camera I cannot scan",
+  "qrSettingsFailed": "Couldn't open the system settings",
   "qrPasteLink": "Paste a link",
   "setUpdatingHermesAuto": "Updating Hermes automatically…",
   "commonResult": "Result",

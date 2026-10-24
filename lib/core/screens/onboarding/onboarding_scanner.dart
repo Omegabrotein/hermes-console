@@ -6,7 +6,9 @@ import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../services/pairing_link.dart';
+import '../../services/platform/app_settings.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/hermes_notice.dart';
 import 'onboarding_motion.dart';
 import 'onboarding_widgets.dart';
 
@@ -151,12 +153,18 @@ class _QrScanViewState extends State<QrScanView> with TickerProviderStateMixin {
     }
   }
 
+  /// Abre los ajustes del sistema para conceder el permiso de cámara.
+  ///
+  /// Antes esto solo llamaba al canal nativo de Android, así que en iOS el
+  /// botón no hacía nada. Ahora delega en [AppSettingsOpener], que usa
+  /// "app-settings:" en iOS y el canal nativo en Android.
   Future<void> _settings() async {
-    try {
-      await const MethodChannel(
-        'hermes/android_apps',
-      ).invokeMethod<bool>('openAppSettings');
-    } catch (_) {}
+    final opened = await const AppSettingsOpener().open();
+    if (opened || !mounted) return;
+    HermesNotice.of(context).showSnackBar(
+      SnackBar(content: Text(Strings.of(context).qrSettingsFailed)),
+      kind: HermesNoticeKind.error,
+    );
   }
 
   @override

@@ -1683,6 +1683,7 @@
   "qrTorch": "Đèn pin",
   "qrAimHint": "Hướng vào QR hiển thị trong terminal máy chủ Hermes của bạn.",
   "qrCameraError": "Không thể mở camera (bị từ chối quyền hoặc không khả dụng).",
+  "qrSettingsFailed": "Không thể mở cài đặt hệ thống",
   "qrPasteLink": "Dán liên kết ghép nối",
   "setUpdatingHermesAuto": "Đang tự động cập nhật Hermes…",
   "commonResult": "Kết quả",
