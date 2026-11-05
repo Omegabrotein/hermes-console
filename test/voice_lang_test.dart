@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hermes_android/core/services/voice/voice_lang.dart';
 import 'package:hermes_android/main.dart' show AppLocales;
+import 'package:hermes_android/core/services/voice/voice_language.dart';
 
 Future<SharedPreferences> _prefs(Map<String, Object> values) async {
   SharedPreferences.setMockInitialValues(values);
@@ -40,24 +41,60 @@ void main() {
       );
     });
 
-    test('system con idioma no soportado cae a español (como la UI)', () async {
+    test(
+      'all nine system languages and regions resolve without Spanish fallback',
+      () async {
+        final prefs = await _prefs({kAppLocalePrefKey: 'system'});
+        for (final code in [
+          'es',
+          'en',
+          'pt',
+          'de',
+          'fr',
+          'it',
+          'ja',
+          'ko',
+          'zh',
+        ]) {
+          expect(effectiveVoiceLang(prefs, deviceLocale: Locale(code)), code);
+          final explicit = await _prefs({kAppLocalePrefKey: '${code}_XX'});
+          expect(effectiveVoiceLang(explicit, deviceLocale: es), code);
+        }
+        expect(
+          effectiveVoiceLang(prefs, deviceLocale: const Locale('xx')),
+          'en',
+        );
+      },
+    );
+
+    test('português explícito manda e o sistema pt-BR é reconhecido', () async {
+      final prefsPt = await _prefs({kAppLocalePrefKey: 'pt'});
+      expect(effectiveVoiceLang(prefsPt, deviceLocale: en), 'pt');
+      expect(effectiveVoiceLang(prefsPt, deviceLocale: fr), 'pt');
+
       final prefs = await _prefs({kAppLocalePrefKey: 'system'});
-      expect(effectiveVoiceLang(prefs, deviceLocale: fr), 'es');
       expect(
-        effectiveVoiceLang(prefs, deviceLocale: const Locale('de', 'DE')),
-        'es',
+        effectiveVoiceLang(prefs, deviceLocale: const Locale('pt', 'BR')),
+        'pt',
+      );
+      expect(
+        effectiveVoiceLang(prefs, deviceLocale: const Locale('pt', 'PT')),
+        'pt',
       );
     });
 
-    test('clave ausente o valor desconocido se tratan como system', () async {
-      final ausente = await _prefs({});
-      expect(effectiveVoiceLang(ausente, deviceLocale: en), 'en');
-      expect(effectiveVoiceLang(ausente, deviceLocale: fr), 'es');
+    test(
+      'absent preference uses the device; unknown explicit preference uses English',
+      () async {
+        final ausente = await _prefs({});
+        expect(effectiveVoiceLang(ausente, deviceLocale: en), 'en');
+        expect(effectiveVoiceLang(ausente, deviceLocale: fr), 'fr');
 
-      final raro = await _prefs({kAppLocalePrefKey: 'xx'});
-      expect(effectiveVoiceLang(raro, deviceLocale: en), 'en');
-      expect(effectiveVoiceLang(raro, deviceLocale: es), 'es');
-    });
+        final raro = await _prefs({kAppLocalePrefKey: 'xx'});
+        expect(effectiveVoiceLang(raro, deviceLocale: en), 'en');
+        expect(effectiveVoiceLang(raro, deviceLocale: es), 'en');
+      },
+    );
 
     test('la clave duplicada no diverge de AppLocales.prefKey', () {
       expect(kAppLocalePrefKey, AppLocales.prefKey);
@@ -82,7 +119,7 @@ void main() {
 
     test('cada idioma de AppLocales es un idioma de voz', () {
       final ids = AppLocales.all.map((o) => o.id).where((i) => i != 'system');
-      expect(ids.toSet(), kVoiceLangs);
+      expect(ids.toSet(), voiceLanguages.keys.toSet());
       expect(AppLocales.byId('vi').label, 'Tiếng Việt');
     });
   });

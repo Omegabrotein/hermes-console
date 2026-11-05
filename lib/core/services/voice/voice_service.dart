@@ -27,6 +27,7 @@ import 'stt_sherpa.dart';
 import 'tts_engine.dart';
 import 'tts_model_manager.dart';
 import 'voice_lang.dart';
+import 'voice_language.dart';
 import 'voice_settings.dart';
 
 /// Reserva opaca para preparar el Dictado oficial de Hermes.
@@ -356,7 +357,7 @@ class VoiceService {
   // el idioma anterior: [_recycleSttIfLangChanged] lo recicla (contrato I3).
   String? _sttLang;
 
-  /// Idioma de voz efectivo actual ('es'|'en'), derivado del idioma de la app.
+  /// Effective registered voice language derived from the app preference.
   String get voiceLang => effectiveVoiceLang(_prefs);
 
   /// Recicla el motor STT cacheado si el idioma de voz efectivo cambió desde
@@ -1774,6 +1775,9 @@ class VoiceService {
   /// Construye el motor neuronal on-device con la voz elegida. Si el modelo no
   /// está descargado, cae a la voz del sistema (nunca falla en silencio).
   Future<TtsEngine> _buildOnnxEngine() async {
+    if (voiceLanguageFor(voiceLang).systemTtsOnly) {
+      return await systemTtsOrSilent(lang: voiceLang);
+    }
     final voice = neuralVoiceById(_engineSettings.onnxVoiceId);
     if (voice == null || !await ttsModels.isReady(voice)) {
       // Sin modelo neural → TTS del sistema, o mudo si no hay motor (GrapheneOS).
@@ -1789,6 +1793,7 @@ class VoiceService {
   // ── Modelos de voz neuronal on-device ───────────────────────────────
   /// ¿La voz neuronal elegida está lista para usarse?
   Future<bool> onnxVoiceReady() async {
+    if (voiceLanguageFor(voiceLang).systemTtsOnly) return false;
     final voice = neuralVoiceById(_settings.onnxVoiceId);
     if (voice == null) return false;
     return ttsModels.isReady(voice);

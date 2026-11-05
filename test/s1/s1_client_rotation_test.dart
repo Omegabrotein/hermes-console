@@ -203,40 +203,51 @@ void main() {
     }
   });
 
-  group('backups stay closed (H7)', () {
-    test('allowBackup=false and every extraction exclusion is present', () {
-      final manifest = File(
-        'android/app/src/main/AndroidManifest.xml',
-      ).readAsStringSync();
-      expect(manifest, contains('android:allowBackup="false"'));
-      expect(manifest, contains('android:fullBackupContent="false"'));
-      expect(
-        manifest,
-        contains('android:dataExtractionRules="@xml/data_extraction_rules"'),
-      );
-      final rules = File(
-        'android/app/src/main/res/xml/data_extraction_rules.xml',
-      ).readAsStringSync();
-      for (final section in ['cloud-backup', 'device-transfer']) {
-        final block = RegExp(
-          '<$section[^>]*>([\\s\\S]*?)</$section>',
-        ).firstMatch(rules);
-        expect(block, isNotNull, reason: section);
-        for (final domain in [
-          'root',
-          'file',
-          'database',
-          'sharedpref',
-          'external',
-        ]) {
-          expect(
-            block!.group(1),
-            contains('<exclude domain="$domain" path="." />'),
-            reason: '$section excludes $domain',
-          );
+  // Deliberate fork divergence from upstream H7 (exclude everything): keep
+  // user data across updates/reinstalls so servers need not be re-added.
+  group('fork data-preserving backup policy', () {
+    test(
+      'backup is enabled with encrypted cloud and safe extraction rules',
+      () {
+        final manifest = File(
+          'android/app/src/main/AndroidManifest.xml',
+        ).readAsStringSync();
+        expect(manifest, contains('android:allowBackup="true"'));
+        expect(
+          manifest,
+          contains('android:fullBackupContent="@xml/backup_rules"'),
+        );
+        expect(
+          manifest,
+          contains('android:dataExtractionRules="@xml/data_extraction_rules"'),
+        );
+        final rules = File(
+          'android/app/src/main/res/xml/data_extraction_rules.xml',
+        ).readAsStringSync();
+        for (final section in ['cloud-backup', 'device-transfer']) {
+          final block = RegExp(
+            '<$section[^>]*>([\\s\\S]*?)</$section>',
+          ).firstMatch(rules);
+          expect(block, isNotNull, reason: section);
+          if (section == 'cloud-backup') {
+            expect(
+              block!.group(0),
+              contains('disableIfNoEncryptionCapabilities="true"'),
+            );
+          }
+          for (final suffix in ['journal', 'shm']) {
+            expect(
+              block!.group(1),
+              contains(
+                '<exclude domain="database" '
+                'path="HermesDatabase.db-$suffix" />',
+              ),
+              reason: '$section excludes transient $suffix',
+            );
+          }
         }
-      }
-    });
+      },
+    );
   });
 
   group('durable write (DJ-1 = A)', () {

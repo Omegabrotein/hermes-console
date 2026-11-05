@@ -1,5 +1,5 @@
-// Paridad de claves ARB: app_vi.arb debe traducir exactamente las claves de
-// app_en.arb (sin faltantes ni sobrantes) y conservar los placeholders.
+// Existing Vietnamese translations plus the explicit English-fallback manifest
+// must cover exactly the English template, preserving all placeholders.
 import 'dart:convert';
 import 'dart:io';
 
@@ -20,7 +20,13 @@ void main() {
     final en = _arb('app_en.arb');
     final vi = _arb('app_vi.arb');
     expect(vi['@@locale'], 'vi');
-    expect(_keys(en).difference(_keys(vi)), isEmpty, reason: 'faltan en vi');
+    final missing =
+        (jsonDecode(File('lib/l10n/untranslated_vi.json').readAsStringSync())
+                as List)
+            .cast<String>();
+    expect(missing.toSet().length, missing.length);
+    expect(_keys(en).difference(_keys(vi)), missing.toSet());
+    expect(_keys(vi).intersection(missing.toSet()), isEmpty);
     expect(_keys(vi).difference(_keys(en)), isEmpty, reason: 'sobran en vi');
   });
 
@@ -28,7 +34,7 @@ void main() {
     final en = _arb('app_en.arb');
     final vi = _arb('app_vi.arb');
     final bad = [
-      for (final k in _keys(en))
+      for (final k in _keys(vi))
         if (!_placeholders(
           vi[k] as String,
         ).containsAll(_placeholders(en[k] as String)))

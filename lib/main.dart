@@ -544,11 +544,39 @@ class AppLocales {
     AppLocaleOption('system', 'Sistema', null),
     AppLocaleOption('es', 'Español', Locale('es')),
     AppLocaleOption('en', 'English', Locale('en')),
+    AppLocaleOption('zh', '中文', Locale('zh')),
+    AppLocaleOption('pt', 'Português (Brasil)', Locale('pt')),
+    AppLocaleOption('de', 'Deutsch', Locale('de')),
+    AppLocaleOption('fr', 'Français', Locale('fr')),
+    AppLocaleOption('ja', '日本語', Locale('ja')),
+    AppLocaleOption('it', 'Italiano', Locale('it')),
+    AppLocaleOption('ko', '한국어', Locale('ko')),
     AppLocaleOption('vi', 'Tiếng Việt', Locale('vi')),
   ];
 
   static AppLocaleOption byId(String? id) =>
       all.firstWhere((o) => o.id == id, orElse: () => all.first);
+
+  /// Resolve manual and system choices against the generated catalog list.
+  static Locale resolve(Locale? locale, Iterable<Locale> supported) {
+    if (locale != null) {
+      for (final candidate in supported) {
+        if (candidate == locale) return candidate;
+      }
+      if (locale.scriptCode != null) {
+        for (final candidate in supported) {
+          if (candidate.languageCode == locale.languageCode &&
+              candidate.scriptCode == locale.scriptCode) {
+            return candidate;
+          }
+        }
+      }
+      for (final candidate in supported) {
+        if (candidate.languageCode == locale.languageCode) return candidate;
+      }
+    }
+    return const Locale('en');
+  }
 }
 
 @visibleForTesting
@@ -663,7 +691,7 @@ class HermesApp extends StatefulWidget {
     await prefs.setString(AppFonts.prefKey, id);
   }
 
-  /// Id del idioma activo (`system`, `es`, `en`). Por defecto, el del sistema.
+  /// Persisted selector ID; defaults to following the system language.
   static String getLocaleId(SharedPreferences prefs) {
     return prefs.getString(AppLocales.prefKey) ?? AppLocales.defaultId;
   }
@@ -1693,6 +1721,9 @@ class HermesAppState extends State<HermesApp> with WidgetsBindingObserver {
         }
       });
       widget.activeChats.reconcileAfterResume();
+      // The list's and Home's sockets too: one may have died, unclosed,
+      // while the app was frozen (the chats' own probe shares the flight).
+      unawaited(SharedGatewayPool.instance.probeLive());
       _resumeHermesUpdates();
       // Volver a primer plano no deshace una pausa explícita; el usuario puede
       // continuar con el orbe o desde la notificación.
@@ -3117,17 +3148,7 @@ class HermesAppState extends State<HermesApp> with WidgetsBindingObserver {
               locale: AppLocales.byId(locId).locale,
               localizationsDelegates: Strings.localizationsDelegates,
               supportedLocales: Strings.supportedLocales,
-              // El único idioma completo además del inglés es el español: si el
-              // sistema (o la elección manual) es español lo usamos; en cualquier
-              // otro caso caemos a inglés, nunca a un español a medias. Cubre los
-              // tres casos: elección manual 'es'/'en' y modo "Sistema" (locale
-              // nulo → llega el idioma del dispositivo).
-              // Vietnamita ('vi') también es completo.
-              localeResolutionCallback: (locale, supported) {
-                if (locale?.languageCode == 'es') return const Locale('es');
-                if (locale?.languageCode == 'vi') return const Locale('vi');
-                return const Locale('en');
-              },
+              localeResolutionCallback: AppLocales.resolve,
               theme: AppFonts.applyToTheme(activeTheme, AppFonts.byId(font)),
               darkTheme: darkTheme == null
                   ? null

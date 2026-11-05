@@ -81,4 +81,7 @@ releases/
 /.claude/
 /.serena/
 /.rollback-snapshots/
+/.reconcile-*/
+/android/.kotlin/
+/console-reconcile-logs/
 /docs/agent-handoffs/

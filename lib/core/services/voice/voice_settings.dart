@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'stt_sherpa.dart' show SherpaModelKind;
 import 'voice_lang.dart';
+import 'voice_language.dart';
 
 /// Motor de reconocimiento de voz (voz → texto).
 enum SttEngineKind {
@@ -428,13 +429,9 @@ class VoiceSettings {
   static const _kCustomMime = 'voice_custom_tts_mime_type';
 
   /// Voz neuronal propuesta cuando el usuario nunca eligió (spec 031). En
-  /// español es la histórica (regresión cero); en inglés, Amy; en vietnamita,
-  /// vais1000 (todas en el catálogo).
-  static String defaultOnnxVoiceFor(String lang) => switch (lang) {
-    'en' => 'en_US-amy-medium',
-    'vi' => 'vi_VN-vais1000-medium',
-    _ => 'es_ES-davefx-medium',
-  };
+  /// español es la histórica (regresión cero); en inglés, Amy (en el catálogo).
+  static String defaultOnnxVoiceFor(String lang) =>
+      voiceLanguageFor(lang).neuralVoiceId ?? '';
 
   /// Voz del TTS por streaming cuando el usuario nunca eligió (spec 031). En
   /// Kokoro `em_santa` es la voz española histórica; `af_heart` la insignia
@@ -442,7 +439,7 @@ class VoiceSettings {
   // ponytail: Kokoro no tiene voz vietnamita → 'vi' usa af_heart (inglés).
   // Añadir una entrada 'vi' cuando Kokoro publique una voz vi.
   static String defaultStreamingVoiceFor(String lang) =>
-      lang == 'en' || lang == 'vi' ? 'af_heart' : 'em_santa';
+      voiceLanguageFor(lang).streamingVoiceId;
 
   static VoiceSettings load(SharedPreferences prefs) {
     const d = VoiceSettings();
@@ -506,7 +503,9 @@ class VoiceSettings {
             : 'tts-1');
     return VoiceSettings(
       sttEngine: SttEngineKind.from(prefs.getString(_kStt)),
-      ttsEngine: migratedTtsEngine,
+      ttsEngine: storedTtsEngine == null && voiceLanguageFor(lang).neuralVoiceId == null
+          ? TtsEngineKind.device
+          : migratedTtsEngine,
       autoSpeak: prefs.getBool(_kAuto) ?? false,
       bargeInEnabled: prefs.getBool(_kBargeIn) ?? false,
       readAloudStopBehavior: ReadAloudStopBehavior.from(
